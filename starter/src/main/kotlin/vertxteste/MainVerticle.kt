@@ -5,6 +5,7 @@ import io.vertx.core.AsyncResult
 import io.vertx.core.Promise
 import io.vertx.core.eventbus.Message
 import io.vertx.core.http.HttpServer
+import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
@@ -61,12 +62,35 @@ class MainVerticle : AbstractVerticle() {
         )
     }
 
-    vertx.eventBus()
     router.post("/hello").handler { rc: RoutingContext ->
       val body: JsonObject = rc.bodyAsJson
       val nome = body.getString("nome")
       vertx.eventBus().request<JsonObject>("movilepay.com", nome) { res: AsyncResult<Message<JsonObject>> ->
         if (res.succeeded()) {
+          rc.response()
+            .putHeader("Content-Type", "application/json")
+            .setStatusCode(200)
+            .end(
+              res.result().body().toBuffer()
+            )
+        } else {
+          rc.response()
+            .putHeader("Content-Type", "application/json")
+            .setStatusCode(500)
+            .end(
+              res.cause().message
+            )
+        }
+      }
+    }
+
+    router.post("/usuario").handler { rc: RoutingContext ->
+      val body: JsonObject = rc.bodyAsJson
+      val nome = body.getString("nome")
+      val sobrenome = body.getString("sobrenome")
+      val idade = body.getInteger("idade") //pq não consigo passar a idade nesse meu request?
+      vertx.eventBus().request<JsonObject>("movilep.com", body) { res: AsyncResult<Message<JsonObject>> ->
+        if(res.succeeded()) {
           rc.response()
             .putHeader("Content-Type", "application/json")
             .setStatusCode(200)

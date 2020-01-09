@@ -18,5 +18,10 @@ fun main() {
       println(res.cause())
     }
   }
-
+  vertx.deployVerticle(IdadeVerticle::class.java.name) { res ->
+    if (res.succeeded()) {
+      println("IdadeVerticle no ar!")
+    } else
+      println(res.cause())
+  }
 }
