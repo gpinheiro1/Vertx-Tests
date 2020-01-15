@@ -153,6 +153,7 @@ class ControllerVerticle : AbstractVerticle() {
       }
     }
 
+
     vertx
       .createHttpServer()
       .requestHandler(router::handle)

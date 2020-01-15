@@ -18,6 +18,7 @@ class DatabaseVerticle : AbstractVerticle() {
   lateinit var client: PgPool
 
   override fun start(startPromise: Promise<Void>) {
+
     val connectOptions = PgConnectOptions(
       port = 5432,
       host = "localhost",
@@ -41,6 +42,7 @@ class DatabaseVerticle : AbstractVerticle() {
   }
 
   private fun insertMessage(message: Message<JsonObject>) {
+    
     client.getConnection { res ->
       if (res.succeeded()) {
         val connection = res.result()
@@ -60,6 +62,7 @@ class DatabaseVerticle : AbstractVerticle() {
   }
 
   private fun getMessages(message: Message<JsonObject>) {
+
     client.getConnection { res: AsyncResult<SqlConnection> ->
       if (res.succeeded()) {
         val connection = res.result()
@@ -82,12 +85,13 @@ class DatabaseVerticle : AbstractVerticle() {
   private fun deleteMessageById(message: Message<JsonObject>) {
 
     client.getConnection { res: AsyncResult<SqlConnection> ->
+      val uuid = message.body().getString("id")
       if (res.succeeded()) {
         val connection = res.result()
         val query = "DELETE FROM vertx WHERE id = $1"
-        connection.preparedQuery(query) { result ->
+        connection.preparedQuery(query, Tuple.of(uuid)) { result ->
           if (result.succeeded()) {
-            message.reply(result)
+            message.reply(JsonObject())
           } else {
             message.fail(0, result.cause().message)
           }
