@@ -53,29 +53,6 @@ class MessageServiceVerticle : AbstractVerticle() {
       }
 
     }
-//    vertx.eventBus().consumer<JsonObject>("movilep.com") { message: Message<JsonObject> ->
-//      if (message.body().getInteger("idade") > 18) {
-//        val mensagemObject = JsonObject()
-//          .put("mensagem", "${message.body().getString("nome")} ${message.body().getString("sobrenome")}, você é maior de idade")
-//        vertx.eventBus().request<JsonObject>("database.com", mensagemObject) {
-//          if (it.succeeded()) {
-//            message.reply(mensagemObject)
-//          } else {
-//            message.fail(0, it.cause().message)
-//          }
-//        }
-//      } else {
-//        val mensagemObject = JsonObject()
-//          .put("mensagem", "${message.body().getString("nome")} ${message.body().getString("sobrenome")}, você é menor de idade")
-//        vertx.eventBus().request<JsonObject>("database.com", mensagemObject) {
-//          if (it.succeeded()) {
-//            message.reply(mensagemObject)
-//          } else {
-//            message.fail(0, it.cause().message)
-//          }
-//        }
-//      }
-//    }
     startPromise.complete()
   }
 }
