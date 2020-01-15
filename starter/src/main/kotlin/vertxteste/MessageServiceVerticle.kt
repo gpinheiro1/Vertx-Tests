@@ -42,6 +42,8 @@ class MessageServiceVerticle : AbstractVerticle() {
         }
       }
     }
+
+    //falta fazer validacao do id quando o usuario digitá-lo
     vertx.eventBus().consumer<JsonObject>("com.movilepay.vertxteste.service.deleteById") { message: Message<JsonObject> ->
         val id = message.body().getString("id")
       vertx.eventBus().request<JsonObject>("com.movilepay.vertxteste.repository.deleteById", JsonObject()) {
