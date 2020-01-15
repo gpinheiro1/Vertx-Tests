@@ -21,7 +21,7 @@
     <vertx.version>3.8.4</vertx.version>
     <junit-jupiter.version>5.4.0</junit-jupiter.version>
 
-    <main.verticle>vertxteste.MainVerticle</main.verticle>
+    <main.verticle>vertxteste.ControllerVerticle</main.verticle>
   </properties>
 
   <dependencyManagement>
@@ -71,7 +71,7 @@
 
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-jdbc-client</artifactId>
+      <artifactId>vertx-pg-client</artifactId>
       <version>3.8.4</version>
     </dependency>
   </dependencies>
