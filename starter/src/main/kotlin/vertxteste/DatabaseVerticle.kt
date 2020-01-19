@@ -11,6 +11,8 @@ import io.vertx.kotlin.sqlclient.PoolOptions
 import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.*
 
 class DatabaseVerticle : AbstractVerticle() {
@@ -37,17 +39,29 @@ class DatabaseVerticle : AbstractVerticle() {
     vertx.eventBus().consumer<JsonObject>("com.movilepay.vertxteste.repository.insert", this::insertMessage)
     vertx.eventBus().consumer<JsonObject>("com.movilepay.vertxteste.repository.getAll", this::getMessages)
     vertx.eventBus().consumer<JsonObject>("com.movilepay.vertxteste.repository.deleteById", this::deleteMessageById)
-
+    vertx.eventBus().consumer<JsonObject>("com.movilepay.vertxteste.repository.update", this::updateMessage)
     startPromise.complete()
   }
 
   private fun insertMessage(message: Message<JsonObject>) {
-    
+
     client.getConnection { res ->
       if (res.succeeded()) {
         val connection = res.result()
-        val query = "INSERT INTO vertx (id, message) VALUES ($1, $2)"
-        connection.preparedQuery(query, Tuple.of(UUID.randomUUID(), message.body().getString("mensagem"))) { res2 ->
+        val query = "INSERT INTO vertx (id, message, number_characters, created_at) VALUES ($1, $2, $3, $4)"
+
+        //recuperar os dados
+
+        val stringId = message.body().getString("id")
+        val id = UUID.fromString(stringId)
+        val msg = message.body().getString("message")
+        val msgLength = message.body().getInteger("message_length")
+        val createdAt = LocalDateTime.ofInstant(message.body().getInstant("created_at"), ZoneId.of("UTC"))
+
+        //organizar/preparar saída
+        val tuple = Tuple.of(id, msg, msgLength, createdAt)
+
+        connection.preparedQuery(query, tuple) { res2 ->
           if (res2.succeeded()) {
             res2.result()
             message.reply(JsonObject())
@@ -85,7 +99,13 @@ class DatabaseVerticle : AbstractVerticle() {
   private fun deleteMessageById(message: Message<JsonObject>) {
 
     client.getConnection { res: AsyncResult<SqlConnection> ->
-      val uuid = message.body().getString("id")
+      val strUUID = message.body().getString("id")
+      val uuid = try {
+        UUID.fromString(strUUID)
+      } catch (ex: IllegalArgumentException) {
+        message.fail(-1, "Invalid uuid number")
+      }
+
       if (res.succeeded()) {
         val connection = res.result()
         val query = "DELETE FROM vertx WHERE id = $1"
@@ -99,5 +119,34 @@ class DatabaseVerticle : AbstractVerticle() {
       }
     }
   }
+
+
+  fun updateMessage(message: Message<JsonObject>) {
+    client.getConnection { res: AsyncResult<SqlConnection> ->
+      if (res.succeeded()) {
+        val connection = res.result()
+        val query = "UPDATE vertx SET message = $1, number_characters = $2, updated_at = $3 WHERE id = $4"
+
+        //recuperar os dados para passar na tupla
+
+        val idStr = message.body().getString("id")
+        val id = UUID.fromString(idStr)
+        val msg = message.body().getString("message")
+        val messageLength = message.body().getString("message_length")
+        val updatedAt = LocalDateTime.ofInstant(message.body().getInstant("updated_at"), ZoneId.of("UTC"))
+
+        val tuple = Tuple.of(msg, messageLength, updatedAt, id)
+
+        connection.preparedQuery(query, tuple) { resultAsync ->
+          if (resultAsync.succeeded()) {
+            message.reply(JsonObject())
+          } else {
+            message.fail(0, resultAsync.cause().message)
+          }
+        }
+      }
+    }
+  }
+
 
 }

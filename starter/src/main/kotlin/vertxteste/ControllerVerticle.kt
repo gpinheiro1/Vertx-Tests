@@ -88,9 +88,6 @@ class ControllerVerticle : AbstractVerticle() {
 
     router.post("/mensagem").handler { rc: RoutingContext ->
       val body: JsonObject = rc.bodyAsJson
-      val nome = body.getString("nome")
-      val sobrenome = body.getString("sobrenome")
-      val idade = body.getInteger("idade")
       vertx.eventBus().request<JsonObject>("com.movilepay.vertxteste.service.insert", body) { res: AsyncResult<Message<JsonObject>> ->
         if (res.succeeded()) {
           rc.response()
@@ -111,9 +108,9 @@ class ControllerVerticle : AbstractVerticle() {
     }
 
 
-    router.get("/mensagem").handler { rc: RoutingContext ->
+    router.get("/mensagem/").handler { rc: RoutingContext ->
       vertx.eventBus().request<JsonArray>("com.movilepay.vertxteste.service.getAll", JsonObject()) { res: AsyncResult<Message<JsonArray>> ->
-        if(res.succeeded()){
+        if (res.succeeded()) {
           rc.response()
             .putHeader("Content-Type", "application/json")
             .setStatusCode(200)
@@ -133,26 +130,46 @@ class ControllerVerticle : AbstractVerticle() {
 
     router.delete("/mensagem/:id").handler { rc: RoutingContext ->
       val id = rc.request().getParam("id")
-      vertx.eventBus().request<JsonArray>("com.movilepay.vertxteste.service.deleteById",
-        JsonObject(mapOf("id" to id))) { res: AsyncResult<Message<JsonArray>> ->
-          if(res.succeeded()) {
-            rc.response()
-              .putHeader("Content-Type", "application/json")
-              .setStatusCode(200)
-              .end(
-                res.result().body().toBuffer()
-              )
-          } else {
-            rc.response()
-              .putHeader("Content-Type", "application/json")
-              .setStatusCode(500)
-              .end(
-                res.cause().message
-              )
-          }
+      vertx.eventBus().request<JsonObject>("com.movilepay.vertxteste.service.deleteById",
+        JsonObject(mapOf("id" to id))) { res: AsyncResult<Message<JsonObject>> ->
+        if (res.succeeded()) {
+          rc.response()
+            .putHeader("Content-Type", "application/json")
+            .setStatusCode(200)
+            .end()
+        } else {
+          rc.response()
+            .putHeader("Content-Type", "application/json")
+            .setStatusCode(500)
+            .end(
+              res.cause().message
+            )
+        }
       }
     }
 
+    router.put("/mensagem/:id").handler { rc: RoutingContext ->
+      val id = rc.request().getParam("id")
+      val body: JsonObject = rc.bodyAsJson
+      body.put("id", id) //adiciono o parametro da rota dentro do json que será trafegado no request
+      vertx.eventBus().request<JsonObject>("com.movilepay.vertxteste.service.update", body) { res: AsyncResult<Message<JsonObject>> ->
+        if (res.succeeded()) {
+          rc.response()
+            .putHeader("Content-Type", "application/json")
+            .setStatusCode(200)
+            .end(
+              res.result().body().toBuffer()
+            )
+        } else {
+          rc.response()
+            .putHeader("Content-Type", "application/json")
+            .setStatusCode(500)
+            .end(
+              res.cause().message
+            )
+        }
+      }
+    }
 
     vertx
       .createHttpServer()
